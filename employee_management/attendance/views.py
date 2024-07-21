@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from .models import Employee,AttendanceRecord,EmployeeWorkingDetails
 from .serializers import EmployeeSerializer,CheckInSerializer,CheckOutSerializer,AttendanceRecordSerializer,EmployeeWorkingDetailsSerializer
 from django.utils import timezone
-from .utils import calculate_work_hours_and_status,calculate_work_hours_and_status_v1
+from .utils import calculate_work_hours_and_status,calculate_work_hours_and_status_v2
 
 
 @api_view(['POST'])
@@ -245,6 +245,64 @@ def log_employee_check_out_v1(request, employee_id):
                 'location': logout_work_location,
                 'working_hrs': total_hours,
                 'is_present': is_present
+            }
+        )
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def log_employee_check_out_v2(request, employee_id):
+    logout_work_location = request.data.get('logout_work_location')
+    
+    try:
+        employee = Employee.objects.get(employee_id=employee_id)
+    except Employee.DoesNotExist:
+        return Response({"error": "Employee not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    now = timezone.now()
+    current_date = now.date()
+
+    try:
+        attendance_record = AttendanceRecord.objects.filter(
+            employee_id=employee, 
+            login_time__date=current_date
+        ).latest('login_time')
+    except AttendanceRecord.DoesNotExist:
+        return Response({"error": "No check-in record found for today."}, status=status.HTTP_404_NOT_FOUND)
+    
+    if attendance_record.logout_time:
+        return Response({"error": "Employee has already checked out for today."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    attendance_record.logout_work_location = logout_work_location
+    attendance_record.logout_time = now
+    
+    serializer = CheckOutSerializer(attendance_record, data={
+        'logout_work_location': logout_work_location,
+        'logout_time': now
+    }, partial=True)
+    
+    if serializer.is_valid():
+        serializer.save()
+        
+        # Calculate work hours and presence
+        attendance_records = AttendanceRecord.objects.filter(
+            employee_id=employee, 
+            login_time__date=attendance_record.login_time.date()
+        )
+        total_hours, is_present_first_half, is_present_second_half = calculate_work_hours_and_status_v2(
+            attendance_records,
+            employee.work_shift
+        )        
+        # Save work details
+        EmployeeWorkingDetails.objects.update_or_create(
+            employee_id=employee,
+            date=attendance_record.login_time.date(),
+            defaults={
+                'location': logout_work_location,
+                'working_hrs': total_hours,
+                'is_present_first_half': is_present_first_half,
+                'is_present_second_half': is_present_second_half
             }
         )
         

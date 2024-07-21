@@ -38,7 +38,8 @@ class EmployeeWorkingDetails(models.Model):
     date = models.DateField(null=False)
     location = models.CharField(max_length=50, null=False)
     working_hrs = models.IntegerField()
-    is_present = models.BooleanField(default=False)
+    is_present_first_half = models.BooleanField(default=False)
+    is_present_second_half = models.BooleanField(default=False)
 
     def __str__(self):
         return f"EmployeeWorkingDetails({self.employee.name} - {self.date})"

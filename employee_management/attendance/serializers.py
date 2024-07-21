@@ -25,4 +25,4 @@ class AttendanceRecordSerializer(serializers.ModelSerializer):
 class EmployeeWorkingDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeWorkingDetails
-        fields = ['employee_id', 'date', 'location', 'working_hrs', 'is_present']
+        fields = ['employee_id', 'date', 'location', 'working_hrs', 'is_present_first_half', 'is_present_second_half']
