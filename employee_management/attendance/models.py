@@ -36,7 +36,6 @@ class AttendanceRecord(models.Model):
 class EmployeeWorkingDetails(models.Model):
     employee_id = models.ForeignKey(Employee, on_delete=models.CASCADE)
     date = models.DateField(null=False)
-    location = models.CharField(max_length=50, null=False,blank=True)
     working_hrs = models.IntegerField()
     is_present_first_half = models.BooleanField(default=False)
     is_present_second_half = models.BooleanField(default=False)

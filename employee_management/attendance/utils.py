@@ -79,3 +79,15 @@ def calculate_work_hours_and_status_v2(attendance_records, shift):
 
     total_hours = total_work_hours.total_seconds() / 3600  # Convert seconds to hours
     return total_hours, is_present_first_half, is_present_second_half
+
+def determine_work_location(login_location, logout_location, is_present_first_half, is_present_second_half):
+    if login_location == logout_location:
+        return login_location
+    elif login_location and logout_location:
+        return "Hybrid"
+    elif login_location:
+        return login_location
+    elif logout_location:
+        return logout_location
+    else:
+        return ""  
