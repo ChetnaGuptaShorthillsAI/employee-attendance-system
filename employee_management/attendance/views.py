@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from .models import Employee,AttendanceRecord,EmployeeWorkingDetails
 from .serializers import EmployeeSerializer,CheckInSerializer,CheckOutSerializer,AttendanceRecordSerializer,EmployeeWorkingDetailsSerializer
 from django.utils import timezone
-from .utils import calculate_work_hours_and_status
+from .utils import calculate_work_hours_and_status,calculate_work_hours_and_status_v1
 
 
 @api_view(['POST'])
@@ -160,3 +160,93 @@ def get_employee_working_hours_and_status(request, employee_id, date):
     
     serializer = EmployeeWorkingDetailsSerializer(work_details)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def log_employee_check_in_v1(request, employee_id):
+    login_work_location = request.data.get('login_work_location')
+    
+    try:
+        employee = Employee.objects.get(employee_id=employee_id)
+    except Employee.DoesNotExist:
+        return Response({"error": "Employee not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    now = timezone.now()
+    current_date = now.date()
+    
+    # Check if employee already checked in today for their shift
+    existing_check_in = AttendanceRecord.objects.filter(
+        employee_id=employee, 
+        login_time__date=current_date, 
+        login_work_location=login_work_location
+    ).exists()
+
+    if existing_check_in:
+        return Response({"error": "Employee has already checked in for today."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    data = {
+        'employee_id': employee_id,
+        'login_work_location': login_work_location,
+        'login_time': now
+    }
+    
+    serializer = CheckInSerializer(data=data)
+    
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def log_employee_check_out_v1(request, employee_id):
+    logout_work_location = request.data.get('logout_work_location')
+    
+    try:
+        employee = Employee.objects.get(employee_id=employee_id)
+    except Employee.DoesNotExist:
+        return Response({"error": "Employee not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    now = timezone.now()
+    current_date = now.date()
+
+    try:
+        attendance_record = AttendanceRecord.objects.filter(
+            employee_id=employee, 
+            login_time__date=current_date
+        ).latest('login_time')
+    except AttendanceRecord.DoesNotExist:
+        return Response({"error": "No check-in record found for today."}, status=status.HTTP_404_NOT_FOUND)
+    
+    if attendance_record.logout_time:
+        return Response({"error": "Employee has already checked out for today."}, status=status.HTTP_400_BAD_REQUEST)
+    
+    attendance_record.logout_work_location = logout_work_location
+    attendance_record.logout_time = now
+    
+    serializer = CheckOutSerializer(attendance_record, data={
+        'logout_work_location': logout_work_location,
+        'logout_time': now
+    }, partial=True)
+    
+    if serializer.is_valid():
+        serializer.save()
+        
+        # Calculate work hours and presence
+        attendance_records = AttendanceRecord.objects.filter(
+            employee_id=employee, 
+            login_time__date=attendance_record.login_time.date()
+        )
+        total_hours, is_present = calculate_work_hours_and_status_v1(attendance_records)
+        
+        # Save work details
+        EmployeeWorkingDetails.objects.update_or_create(
+            employee_id=employee,
+            date=attendance_record.login_time.date(),
+            defaults={
+                'location': logout_work_location,
+                'working_hrs': total_hours,
+                'is_present': is_present
+            }
+        )
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
