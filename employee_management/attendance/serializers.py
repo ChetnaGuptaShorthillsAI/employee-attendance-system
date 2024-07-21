@@ -4,8 +4,7 @@ from .models import Employee,AttendanceRecord,EmployeeWorkingDetails
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
-        fields = ['name', 'employee_id', 'email', 'work_shift', 'is_active', 'created_at', 'updated_at']
-
+        fields = ['name', 'employee_id', 'email', 'work_shift']  
 
 class CheckInSerializer(serializers.ModelSerializer):
     class Meta:
