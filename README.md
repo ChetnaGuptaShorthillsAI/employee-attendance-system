@@ -12,7 +12,7 @@ The Employee Attendance Management System is designed to track employees' attend
 ## Prerequisites
 - Python 3.6+
 - Django 3.2+
-- SQLite (default for development)
+- SQLite 
 
 ## Installation
 
