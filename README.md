@@ -18,5 +18,28 @@ The Employee Attendance Management System is designed to track employees' attend
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/yourusername/employee_attendance_management.git
+git clone https://github.com/ChetnaGuptaShorthillsAI/employee-attendance-system.git
 cd employee_attendance_management
+```
+
+### Step 2: Create a Virtual Environment
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+```
+
+### Step 3: Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Step 4: Run Migrations
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### Step 5: Run the Development Server
+```bash
+python manage.py runserver
+```
