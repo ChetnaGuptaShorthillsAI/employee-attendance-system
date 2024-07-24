@@ -19,7 +19,7 @@ The Employee Attendance Management System is designed to track employees' attend
 ### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/yourusername/employee-attendance-system.git
-cd employee_attendance_management
+cd employee_management
 ```
 
 ### Step 2: Create a Virtual Environment
