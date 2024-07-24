@@ -28,7 +28,7 @@ class EmployeeAPITests(TestCase):
         self.log_employee_check_in_url = f'{url}/log_employee_check_in/E123/'
         self.log_employee_check_out_url = f'{url}/log_employee_check_out/E123/'
         self.get_employee_attendance_url = f'{url}/get_employee_attendance/E123/'
-        self.get_employee_working_hours_and_status_v1_url = f'{url}/employee/E123/working-hours/2024-07-21/'
+        self.get_employee_working_hours_and_status_v1_url = f'{url}/employee/E123/working-hours/2024-07-24/'
 
         # Create initial employee
         self.client.post(self.create_employee_url, self.employee_data, format='json')
